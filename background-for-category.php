@@ -127,6 +127,11 @@ function background_for_category_options_page_output() {
 			Плагин устанавливает фоны для рубрик верхнего уровня.<br>
 			Выберите изображения из медиабиблиотеки для каждой рубрики и главной страницы.
 		</div>
+		<div style="font-size: 11pt; margin-top: 8px; color: #646970;">
+			<b><?php esc_html_e( 'Ограничения:', BFC_SLUG ); ?></b>
+			<?php esc_html_e( 'страницы (page) не поддерживаются; при нескольких рубриках у поста основная рубрика (Yoast/RankMath) игнорируется — применяется рубрика с наименьшим ID.', BFC_SLUG ); ?>
+			<a href="https://github.com/seojacky/background-for-category#readme" target="_blank"><?php esc_html_e( 'Подробнее в README', BFC_SLUG ); ?></a>
+		</div>
 
 		<form action="options.php" method="POST">
 			<?php
