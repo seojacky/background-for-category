@@ -106,8 +106,8 @@ function background_for_category_enqueue_admin_scripts( $hook ) {
 add_action( 'wp_head', 'background_for_category', 5 );
 
 function background_for_category( $post_id ) {
-	$default_bg_clr = get_option( 'background_for_category_option' );
-	$default_bg_clr = $default_bg_clr ? $default_bg_clr['input'] : '#000000';
+	$option         = get_option( 'background_for_category_option', array() );
+	$default_bg_clr = isset( $option['input'] ) ? $option['input'] : '';
 
 	$images        = get_option( 'background_for_category_images', array() );
 	$attachment_id = 0;
@@ -121,15 +121,19 @@ function background_for_category( $post_id ) {
 		}
 	}
 
+	$color_css = $default_bg_clr ? esc_attr( $default_bg_clr ) . ' ' : '';
+
 	if ( $attachment_id ) {
 		$url = wp_get_attachment_url( $attachment_id );
 		if ( $url ) {
-			echo '<style>body {background:' . esc_attr( $default_bg_clr ) . ' url(' . esc_url( $url ) . ') top center no-repeat !important;}</style>';
+			echo '<style>body {background:' . $color_css . 'url(' . esc_url( $url ) . ') top center no-repeat !important;}</style>';
 			return;
 		}
 	}
 
-	echo '<style>body {background:' . esc_attr( $default_bg_clr ) . ' !important;}</style>';
+	if ( $color_css ) {
+		echo '<style>body {background:' . $color_css . '!important;}</style>';
+	}
 }
 
 
@@ -178,18 +182,19 @@ function background_for_category_plugin_settings() {
 }
 
 function fill_background_for_category_field1() {
-	$val = get_option( 'background_for_category_option' );
-	$val = $val ? $val['input'] : null;
+	$option = get_option( 'background_for_category_option', array() );
+	$val    = isset( $option['input'] ) ? $option['input'] : '';
+	$preview_style = $val ? ' background-color:' . esc_attr( $val ) . ';' : '';
 	?>
 	<input type="text" name="background_for_category_option[input]" value="<?php echo esc_attr( $val ); ?>" />
-	<div style="display: inline-block; margin-left: 10px; background-color: <?php echo esc_attr( $val ); ?>; height: 20px; width: 20px;"></div>
-	<div>Формат: #232323</div>
+	<div style="display:inline-block;margin-left:10px;height:20px;width:20px;border:1px solid #ccc;<?php echo $preview_style; ?>"></div>
+	<div>Формат: #232323. Оставьте пустым, чтобы не задавать цвет.</div>
 	<?php
 }
 
 function fill_background_for_category_field2() {
-	$val = get_option( 'background_for_category_option' );
-	$val = $val ? $val['checkbox'] : null;
+	$option = get_option( 'background_for_category_option', array() );
+	$val    = isset( $option['checkbox'] ) ? $option['checkbox'] : null;
 	?>
 	<label><input type="checkbox" name="background_for_category_option[checkbox]" value="1" <?php checked( 1, $val ); ?> /> отметить</label>
 	<?php
