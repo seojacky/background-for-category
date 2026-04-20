@@ -51,6 +51,26 @@ add_filter( 'plugin_row_meta', function( $links, $file ) {
 
 
 /**
+ * Admin notice if get_top_term() is missing
+ */
+add_action( 'admin_notices', 'background_for_category_admin_notice' );
+
+function background_for_category_admin_notice() {
+	if ( function_exists( 'get_top_term' ) ) {
+		return;
+	}
+	?>
+	<div class="notice notice-warning">
+		<p>
+			<strong>Background for Category:</strong>
+			<?php esc_html_e( 'Функция', BFC_SLUG ); ?> <code>get_top_term()</code> <?php esc_html_e( 'не найдена. Фоны для рубрик и постов работать не будут. Добавьте функцию в', BFC_SLUG ); ?> <code>functions.php</code> <?php esc_html_e( 'или установите соответствующий плагин.', BFC_SLUG ); ?>
+		</p>
+	</div>
+	<?php
+}
+
+
+/**
  * Add plugin settings page
  */
 add_action( 'admin_menu', 'add_plugin_page_background_for_category' );
@@ -94,7 +114,7 @@ function background_for_category( $post_id ) {
 
 	if ( is_home() || is_front_page() ) {
 		$attachment_id = isset( $images['home'] ) ? intval( $images['home'] ) : 0;
-	} else {
+	} elseif ( function_exists( 'get_top_term' ) ) {
 		$top_term = get_top_term( 'category', $post_id );
 		if ( ! empty( $top_term ) ) {
 			$attachment_id = isset( $images[ $top_term->term_id ] ) ? intval( $images[ $top_term->term_id ] ) : 0;
