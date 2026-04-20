@@ -8,7 +8,6 @@
 * GitHub Plugin URI: https://github.com/seojacky/background-for-category
 * Plugin URI: https://github.com/seojacky/background-for-category
 * Text Domain: background-for-category
-* Domain Path: /languages
 * License: GPLv2 or later
 * License URI: https://www.gnu.org/licenses/gpl-2.0.html
 */
