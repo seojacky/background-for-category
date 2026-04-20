@@ -1,8 +1,8 @@
 <?php
 /*
 * Plugin Name: WP Booster: Background for Category
-* Description: Sets background images for top-level categories. Images must be placed in /images/backgrounds/ and named by slug, e.g. background-wot.jpg. Requires get_top_term() function.
-* Version: 1.1
+* Description: Sets background images for top-level categories. Images are chosen from the WordPress media library. Requires get_top_term() function.
+* Version: 1.2
 * Author: seojacky
 * Author URI: https://t.me/big_jacky
 * GitHub Plugin URI: https://github.com/seojacky/background-for-category
@@ -16,7 +16,7 @@
 /* Exit if accessed directly */
 if ( ! defined( 'ABSPATH' ) ) { return; }
 
-define( 'BFC_VERSION', '1.1' );
+define( 'BFC_VERSION', '1.2' );
 define( 'BFC_FILE', __FILE__ );
 define( 'BFC_DIR', __DIR__ );
 define( 'BFC_FOLDER', trailingslashit( plugin_dir_url( __FILE__ ) ) );
@@ -66,26 +66,50 @@ function add_plugin_page_background_for_category() {
 }
 
 
+/**
+ * Enqueue WordPress media uploader on plugin settings page only
+ */
+add_action( 'admin_enqueue_scripts', 'background_for_category_enqueue_admin_scripts' );
+
+function background_for_category_enqueue_admin_scripts( $hook ) {
+	if ( 'settings_page_' . BFC_SLUG !== $hook ) {
+		return;
+	}
+	wp_enqueue_media();
+}
+
+
+/**
+ * Output background CSS in <head>
+ * Uses autoloaded option — zero extra DB queries when option is set
+ */
 add_action( 'wp_head', 'background_for_category', 5 );
+
 function background_for_category( $post_id ) {
-
-	$site_url = get_site_url();
-
 	$default_bg_clr = get_option( 'background_for_category_option' );
 	$default_bg_clr = $default_bg_clr ? $default_bg_clr['input'] : '#000000';
 
+	$images        = get_option( 'background_for_category_images', array() );
+	$attachment_id = 0;
+
 	if ( is_home() ) {
-		echo '<style>body {background:' . $default_bg_clr . ' url(' . $site_url . '/images/backgrounds/background-home.jpg) top center no-repeat !important;}</style>';
+		$attachment_id = isset( $images['home'] ) ? intval( $images['home'] ) : 0;
 	} else {
 		$top_term = get_top_term( 'category', $post_id );
-		$slug     = $top_term->slug;
-
-		if ( ! empty( $slug ) ) {
-			echo '<style>body {background: ' . $default_bg_clr . ' url(' . $site_url . '/images/backgrounds/background-' . $slug . '.jpg) top center no-repeat !important;}</style>';
-		} else {
-			echo '<style>body {background: ' . $default_bg_clr . ' !important;}</style>';
+		if ( ! empty( $top_term ) ) {
+			$attachment_id = isset( $images[ $top_term->term_id ] ) ? intval( $images[ $top_term->term_id ] ) : 0;
 		}
 	}
+
+	if ( $attachment_id ) {
+		$url = wp_get_attachment_url( $attachment_id );
+		if ( $url ) {
+			echo '<style>body {background:' . esc_attr( $default_bg_clr ) . ' url(' . esc_url( $url ) . ') top center no-repeat !important;}</style>';
+			return;
+		}
+	}
+
+	echo '<style>body {background:' . esc_attr( $default_bg_clr ) . ' !important;}</style>';
 }
 
 
@@ -100,9 +124,8 @@ function background_for_category_options_page_output() {
 
 		<div style="font-size: 12pt;">
 			<b>Внимание!</b> Требует установки плагина или функции <b>get_top_term()</b>.<br>
-			Плагин устанавливает фоны для рубрик.<br>
-			Изображения должны быть в папке /images/backgrounds/.<br>
-			Название изображения устанавливаются жёстко по шаблону. Например, для рубрики верхнего уровня сo slag равным <b>wot</b>, название файла фона background-<b>wot</b>.jpg.
+			Плагин устанавливает фоны для рубрик верхнего уровня.<br>
+			Выберите изображения из медиабиблиотеки для каждой рубрики и главной страницы.
 		</div>
 
 		<form action="options.php" method="POST">
@@ -121,13 +144,17 @@ function background_for_category_options_page_output() {
  * Register plugin settings
  */
 add_action( 'admin_init', 'background_for_category_plugin_settings' );
+
 function background_for_category_plugin_settings() {
 	register_setting( 'option_group', 'background_for_category_option', 'background_for_categorysanitize_callback' );
+	register_setting( 'option_group', 'background_for_category_images', 'background_for_category_images_sanitize' );
 
 	add_settings_section( 'section_id', 'Основные настройки', '', 'background_for_category_page' );
+	add_settings_section( 'section_images', 'Фоновые изображения', '', 'background_for_category_page' );
 
 	add_settings_field( 'background_for_category_field1', 'Дефолтный цвет фона', 'fill_background_for_category_field1', 'background_for_category_page', 'section_id' );
 	add_settings_field( 'background_for_category_field2', 'Запасная опция', 'fill_background_for_category_field2', 'background_for_category_page', 'section_id' );
+	add_settings_field( 'background_for_category_images_field', 'Изображения', 'background_for_category_images_field_render', 'background_for_category_page', 'section_images' );
 }
 
 function fill_background_for_category_field1() {
@@ -148,13 +175,115 @@ function fill_background_for_category_field2() {
 	<?php
 }
 
+function background_for_category_images_field_render() {
+	$images = get_option( 'background_for_category_images', array() );
+
+	$rows   = array();
+	$rows[] = array(
+		'key'   => 'home',
+		'label' => 'Главная страница',
+		'id'    => isset( $images['home'] ) ? intval( $images['home'] ) : 0,
+	);
+
+	$categories = get_categories( array(
+		'parent'     => 0,
+		'hide_empty' => false,
+		'orderby'    => 'name',
+		'order'      => 'ASC',
+	) );
+
+	foreach ( $categories as $cat ) {
+		$rows[] = array(
+			'key'   => $cat->term_id,
+			'label' => $cat->name,
+			'id'    => isset( $images[ $cat->term_id ] ) ? intval( $images[ $cat->term_id ] ) : 0,
+		);
+	}
+
+	echo '<table class="widefat striped" style="max-width:700px;">';
+	echo '<thead><tr><th>Страница / Рубрика</th><th>Превью</th><th>Действия</th></tr></thead>';
+	echo '<tbody>';
+
+	foreach ( $rows as $row ) {
+		$key         = esc_attr( $row['key'] );
+		$att_id      = $row['id'];
+		$preview_url = $att_id ? wp_get_attachment_image_url( $att_id, 'thumbnail' ) : '';
+		$has_image   = ! empty( $preview_url );
+
+		echo '<tr>';
+		echo '<td>' . esc_html( $row['label'] ) . '</td>';
+		echo '<td>';
+		echo '<img src="' . esc_url( $preview_url ) . '" style="max-height:60px;max-width:120px;' . ( $has_image ? '' : 'display:none;' ) . '" class="bfc-preview-' . $key . '" />';
+		echo '</td>';
+		echo '<td>';
+		echo '<input type="hidden" name="background_for_category_images[' . $key . ']" value="' . esc_attr( $att_id ) . '" class="bfc-input-' . $key . '" />';
+		echo '<button type="button" class="button bfc-select" data-key="' . $key . '">Выбрать</button> ';
+		echo '<button type="button" class="button bfc-remove" data-key="' . $key . '"' . ( $has_image ? '' : ' style="display:none;"' ) . '>Удалить</button>';
+		echo '</td>';
+		echo '</tr>';
+	}
+
+	echo '</tbody></table>';
+	?>
+	<script>
+	(function($) {
+		$(document).on('click', '.bfc-select', function(e) {
+			e.preventDefault();
+			var key   = $(this).data('key');
+			var frame = wp.media({
+				title    : 'Выберите фоновое изображение',
+				button   : { text: 'Использовать' },
+				multiple : false,
+				library  : { type: 'image' }
+			});
+			frame.on('select', function() {
+				var attachment = frame.state().get('selection').first().toJSON();
+				var thumb      = attachment.sizes && attachment.sizes.thumbnail ? attachment.sizes.thumbnail.url : attachment.url;
+				$('.bfc-input-'   + key).val(attachment.id);
+				$('.bfc-preview-' + key).attr('src', thumb).show();
+				$('[data-key="'   + key + '"].bfc-remove').show();
+			});
+			frame.open();
+		});
+
+		$(document).on('click', '.bfc-remove', function(e) {
+			e.preventDefault();
+			var key = $(this).data('key');
+			$('.bfc-input-'   + key).val('');
+			$('.bfc-preview-' + key).attr('src', '').hide();
+			$(this).hide();
+		});
+	})(jQuery);
+	</script>
+	<?php
+}
+
+function background_for_category_images_sanitize( $input ) {
+	if ( ! is_array( $input ) ) {
+		return array();
+	}
+	$clean = array();
+	foreach ( $input as $key => $val ) {
+		$att_id = intval( $val );
+		if ( $att_id <= 0 ) {
+			continue;
+		}
+		if ( 'home' === $key ) {
+			$clean['home'] = $att_id;
+		} else {
+			$clean[ intval( $key ) ] = $att_id;
+		}
+	}
+	return $clean;
+}
+
 function background_for_categorysanitize_callback( $options ) {
 	foreach ( $options as $name => &$val ) {
-		if ( $name == 'input' ) {
+		if ( 'input' === $name ) {
 			$val = htmlspecialchars( $val, ENT_QUOTES );
 		}
 
-		if ( $name == 'checkbox' ) {
+		if ( 'checkbox' === $name ) {
 			$val = intval( $val );
 		}
 	}
