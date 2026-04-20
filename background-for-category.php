@@ -92,7 +92,7 @@ function background_for_category( $post_id ) {
 	$images        = get_option( 'background_for_category_images', array() );
 	$attachment_id = 0;
 
-	if ( is_home() ) {
+	if ( is_home() || is_front_page() ) {
 		$attachment_id = isset( $images['home'] ) ? intval( $images['home'] ) : 0;
 	} else {
 		$top_term = get_top_term( 'category', $post_id );
