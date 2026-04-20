@@ -3,7 +3,7 @@ Contributors: seojacky
 Tags: background, category, taxonomy, design, frontend
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 1.0
+Stable tag: 1.1
 Requires PHP: 7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -54,6 +54,10 @@ WP Booster: Background for Category — плагин для автоматиче
 1. Страница настроек плагина.
 
 == Changelog ==
+
+= 1.1 - 20.04.2026 =
+* Добавлен ARCHITECTURE_MAP.md — карта навигации для AI-агента.
+* Добавлен CLAUDE.md — поведенческая конституция для Claude Code.
 
 = 1.0 - 20.04.2026 =
 * Первый релиз.

@@ -2,7 +2,7 @@
 /*
 * Plugin Name: WP Booster: Background for Category
 * Description: Sets background images for top-level categories. Images must be placed in /images/backgrounds/ and named by slug, e.g. background-wot.jpg. Requires get_top_term() function.
-* Version: 1.0
+* Version: 1.1
 * Author: seojacky
 * Author URI: https://t.me/big_jacky
 * GitHub Plugin URI: https://github.com/seojacky/background-for-category
@@ -16,7 +16,7 @@
 /* Exit if accessed directly */
 if ( ! defined( 'ABSPATH' ) ) { return; }
 
-define( 'BFC_VERSION', '1.0' );
+define( 'BFC_VERSION', '1.1' );
 define( 'BFC_FILE', __FILE__ );
 define( 'BFC_DIR', __DIR__ );
 define( 'BFC_FOLDER', trailingslashit( plugin_dir_url( __FILE__ ) ) );
