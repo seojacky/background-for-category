@@ -90,9 +90,19 @@ function background_for_category_create_admin_menu() {
 	);
 }
 
-/* Hide duplicate first submenu item (mirrors parent label) */
+/* Hide duplicate first submenu item; add icon for Background for Category submenu link */
 add_action( 'admin_head', function() {
-	echo '<style>.toplevel_page_wp-booster li.wp-first-item { display: none; }</style>';
+	echo '<style>
+	.toplevel_page_wp-booster li.wp-first-item { display: none; }
+	.toplevel_page_wp-booster li a[href*="background-for-category"]::before {
+		font-family: dashicons;
+		content: "\f128";
+		margin-right: 6px;
+		font-size: 16px;
+		vertical-align: middle;
+		line-height: 1;
+	}
+	</style>';
 } );
 
 /* Add submenu page under WP Booster */
@@ -204,7 +214,6 @@ function background_for_category_plugin_settings() {
 	add_settings_section( 'section_images', 'Фоновые изображения', '', 'background_for_category_page' );
 
 	add_settings_field( 'background_for_category_field1', 'Дефолтный цвет фона', 'fill_background_for_category_field1', 'background_for_category_page', 'section_id' );
-	add_settings_field( 'background_for_category_field2', 'Запасная опция', 'fill_background_for_category_field2', 'background_for_category_page', 'section_id' );
 	add_settings_field( 'background_for_category_images_field', 'Изображения', 'background_for_category_images_field_render', 'background_for_category_page', 'section_images' );
 }
 
@@ -216,14 +225,6 @@ function fill_background_for_category_field1() {
 	<input type="text" name="background_for_category_option[input]" value="<?php echo esc_attr( $val ); ?>" />
 	<div style="display:inline-block;margin-left:10px;height:20px;width:20px;border:1px solid #ccc;<?php echo $preview_style; ?>"></div>
 	<div>Формат: #232323. Оставьте пустым, чтобы не задавать цвет.</div>
-	<?php
-}
-
-function fill_background_for_category_field2() {
-	$option = get_option( 'background_for_category_option', array() );
-	$val    = isset( $option['checkbox'] ) ? $option['checkbox'] : null;
-	?>
-	<label><input type="checkbox" name="background_for_category_option[checkbox]" value="1" <?php checked( 1, $val ); ?> /> отметить</label>
 	<?php
 }
 
@@ -333,10 +334,6 @@ function background_for_categorysanitize_callback( $options ) {
 	foreach ( $options as $name => &$val ) {
 		if ( 'input' === $name ) {
 			$val = htmlspecialchars( $val, ENT_QUOTES );
-		}
-
-		if ( 'checkbox' === $name ) {
-			$val = intval( $val );
 		}
 	}
 
