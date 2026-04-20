@@ -51,6 +51,26 @@ add_filter( 'plugin_row_meta', function( $links, $file ) {
 
 
 /**
+ * Admin notice if get_top_term() is missing
+ */
+add_action( 'admin_notices', 'background_for_category_admin_notice' );
+
+function background_for_category_admin_notice() {
+	if ( function_exists( 'get_top_term' ) ) {
+		return;
+	}
+	?>
+	<div class="notice notice-warning">
+		<p>
+			<strong>Background for Category:</strong>
+			<?php esc_html_e( 'Функция', BFC_SLUG ); ?> <code>get_top_term()</code> <?php esc_html_e( 'не найдена. Фоны для рубрик и постов работать не будут. Добавьте функцию в', BFC_SLUG ); ?> <code>functions.php</code> <?php esc_html_e( 'или установите соответствующий плагин.', BFC_SLUG ); ?>
+		</p>
+	</div>
+	<?php
+}
+
+
+/**
  * Add plugin settings page
  */
 add_action( 'admin_menu', 'add_plugin_page_background_for_category' );
@@ -86,30 +106,34 @@ function background_for_category_enqueue_admin_scripts( $hook ) {
 add_action( 'wp_head', 'background_for_category', 5 );
 
 function background_for_category( $post_id ) {
-	$default_bg_clr = get_option( 'background_for_category_option' );
-	$default_bg_clr = $default_bg_clr ? $default_bg_clr['input'] : '#000000';
+	$option         = get_option( 'background_for_category_option', array() );
+	$default_bg_clr = isset( $option['input'] ) ? $option['input'] : '';
 
 	$images        = get_option( 'background_for_category_images', array() );
 	$attachment_id = 0;
 
-	if ( is_home() ) {
+	if ( is_home() || is_front_page() ) {
 		$attachment_id = isset( $images['home'] ) ? intval( $images['home'] ) : 0;
-	} else {
+	} elseif ( function_exists( 'get_top_term' ) ) {
 		$top_term = get_top_term( 'category', $post_id );
 		if ( ! empty( $top_term ) ) {
 			$attachment_id = isset( $images[ $top_term->term_id ] ) ? intval( $images[ $top_term->term_id ] ) : 0;
 		}
 	}
 
+	$color_css = $default_bg_clr ? esc_attr( $default_bg_clr ) . ' ' : '';
+
 	if ( $attachment_id ) {
 		$url = wp_get_attachment_url( $attachment_id );
 		if ( $url ) {
-			echo '<style>body {background:' . esc_attr( $default_bg_clr ) . ' url(' . esc_url( $url ) . ') top center no-repeat !important;}</style>';
+			echo '<style>body {background:' . $color_css . 'url(' . esc_url( $url ) . ') top center no-repeat !important;}</style>';
 			return;
 		}
 	}
 
-	echo '<style>body {background:' . esc_attr( $default_bg_clr ) . ' !important;}</style>';
+	if ( $color_css ) {
+		echo '<style>body {background:' . $color_css . '!important;}</style>';
+	}
 }
 
 
@@ -158,18 +182,19 @@ function background_for_category_plugin_settings() {
 }
 
 function fill_background_for_category_field1() {
-	$val = get_option( 'background_for_category_option' );
-	$val = $val ? $val['input'] : null;
+	$option = get_option( 'background_for_category_option', array() );
+	$val    = isset( $option['input'] ) ? $option['input'] : '';
+	$preview_style = $val ? ' background-color:' . esc_attr( $val ) . ';' : '';
 	?>
 	<input type="text" name="background_for_category_option[input]" value="<?php echo esc_attr( $val ); ?>" />
-	<div style="display: inline-block; margin-left: 10px; background-color: <?php echo esc_attr( $val ); ?>; height: 20px; width: 20px;"></div>
-	<div>Формат: #232323</div>
+	<div style="display:inline-block;margin-left:10px;height:20px;width:20px;border:1px solid #ccc;<?php echo $preview_style; ?>"></div>
+	<div>Формат: #232323. Оставьте пустым, чтобы не задавать цвет.</div>
 	<?php
 }
 
 function fill_background_for_category_field2() {
-	$val = get_option( 'background_for_category_option' );
-	$val = $val ? $val['checkbox'] : null;
+	$option = get_option( 'background_for_category_option', array() );
+	$val    = isset( $option['checkbox'] ) ? $option['checkbox'] : null;
 	?>
 	<label><input type="checkbox" name="background_for_category_option[checkbox]" value="1" <?php checked( 1, $val ); ?> /> отметить</label>
 	<?php
