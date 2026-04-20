@@ -3,7 +3,7 @@ Contributors: seojacky
 Tags: background, category, taxonomy, design, frontend
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 1.3
+Stable tag: 1.4
 Requires PHP: 7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -50,6 +50,10 @@ WP Booster: Background for Category — плагин для автоматиче
 1. Страница настроек плагина.
 
 == Changelog ==
+
+= 1.4 - 20.04.2026 =
+* Удалена бесполезная «Запасная опция» (чекбокс, который нигде не читался) со страницы настроек.
+* Добавлена иконка (dashicons format-image) перед пунктом «Фон категории» в подменю WP Booster.
 
 = 1.3 - 20.04.2026 =
 * Страница настроек перенесена в меню «WP Booster» (вместо раздела «Параметры»). При отсутствии меню плагин создаёт его автоматически; если оно уже зарегистрировано другим плагином WP Booster — добавляет только подменю.
