@@ -29,7 +29,7 @@ add_action( 'plugins_loaded', function() {
 /* Plugin settings links */
 add_filter( 'plugin_action_links_' . plugin_basename( BFC_FILE ), function( $links ) {
 	$links[] = '<a href="' .
-		admin_url( 'options-general.php?page=' . BFC_SLUG ) .
+		admin_url( 'admin.php?page=' . BFC_SLUG ) .
 		'">' . __( 'Settings' ) . '</a>';
 	$links[] = '<a href="https://t.me/big_jacky">' . __( 'Author' ) . '</a>';
 	return $links;
@@ -51,19 +51,42 @@ add_filter( 'plugin_row_meta', function( $links, $file ) {
 
 
 /**
- * Add plugin settings page
+ * Create top-level WP Booster menu if not yet registered by another plugin
  */
-add_action( 'admin_menu', 'add_plugin_page_background_for_category' );
+add_action( 'admin_menu', 'background_for_category_create_admin_menu', 8 );
 
-function add_plugin_page_background_for_category() {
-	add_options_page(
+function background_for_category_create_admin_menu() {
+	global $admin_page_hooks;
+	if ( isset( $admin_page_hooks['wp-booster'] ) ) {
+		return;
+	}
+	add_menu_page(
+		esc_html__( 'WP Booster', BFC_SLUG ),
+		esc_html_x( 'WP Booster', 'Menu item', BFC_SLUG ),
+		'manage_options',
+		'wp-booster',
+		'background_for_category_options_page_output',
+		'dashicons-backup',
+		92.3
+	);
+}
+
+/* Hide duplicate first submenu item (mirrors parent label) */
+add_action( 'admin_head', function() {
+	echo '<style>.toplevel_page_wp-booster li.wp-first-item { display: none; }</style>';
+} );
+
+/* Add submenu page under WP Booster */
+add_action( 'admin_menu', function() {
+	add_submenu_page(
+		'wp-booster',
 		'Настройки Фона категории',
 		'Фон категории',
 		'manage_options',
 		BFC_SLUG,
 		'background_for_category_options_page_output'
 	);
-}
+}, 99 );
 
 
 /**
@@ -72,7 +95,7 @@ function add_plugin_page_background_for_category() {
 add_action( 'admin_enqueue_scripts', 'background_for_category_enqueue_admin_scripts' );
 
 function background_for_category_enqueue_admin_scripts( $hook ) {
-	if ( 'settings_page_' . BFC_SLUG !== $hook ) {
+	if ( 'wp-booster_page_' . BFC_SLUG !== $hook ) {
 		return;
 	}
 	wp_enqueue_media();
