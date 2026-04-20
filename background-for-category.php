@@ -2,7 +2,7 @@
 /*
 * Plugin Name: WP Booster: Background for Category
 * Description: Sets background images for top-level categories. Images are chosen from the WordPress media library. Requires get_top_term() function.
-* Version: 1.2
+* Version: 1.3
 * Author: seojacky
 * Author URI: https://t.me/big_jacky
 * GitHub Plugin URI: https://github.com/seojacky/background-for-category
@@ -16,7 +16,7 @@
 /* Exit if accessed directly */
 if ( ! defined( 'ABSPATH' ) ) { return; }
 
-define( 'BFC_VERSION', '1.2' );
+define( 'BFC_VERSION', '1.3' );
 define( 'BFC_FILE', __FILE__ );
 define( 'BFC_DIR', __DIR__ );
 define( 'BFC_FOLDER', trailingslashit( plugin_dir_url( __FILE__ ) ) );
