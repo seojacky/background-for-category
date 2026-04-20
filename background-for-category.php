@@ -2,7 +2,7 @@
 /*
 * Plugin Name: WP Booster: Background for Category
 * Description: Sets background images for top-level categories. Images are chosen from the WordPress media library. Requires get_top_term() function.
-* Version: 1.2
+* Version: 1.3
 * Author: seojacky
 * Author URI: https://t.me/big_jacky
 * GitHub Plugin URI: https://github.com/seojacky/background-for-category
@@ -16,7 +16,7 @@
 /* Exit if accessed directly */
 if ( ! defined( 'ABSPATH' ) ) { return; }
 
-define( 'BFC_VERSION', '1.2' );
+define( 'BFC_VERSION', '1.3' );
 define( 'BFC_FILE', __FILE__ );
 define( 'BFC_DIR', __DIR__ );
 define( 'BFC_FOLDER', trailingslashit( plugin_dir_url( __FILE__ ) ) );
@@ -29,7 +29,7 @@ add_action( 'plugins_loaded', function() {
 /* Plugin settings links */
 add_filter( 'plugin_action_links_' . plugin_basename( BFC_FILE ), function( $links ) {
 	$links[] = '<a href="' .
-		admin_url( 'options-general.php?page=' . BFC_SLUG ) .
+		admin_url( 'admin.php?page=' . BFC_SLUG ) .
 		'">' . __( 'Settings' ) . '</a>';
 	$links[] = '<a href="https://t.me/big_jacky">' . __( 'Author' ) . '</a>';
 	return $links;
@@ -71,19 +71,42 @@ function background_for_category_admin_notice() {
 
 
 /**
- * Add plugin settings page
+ * Create top-level WP Booster menu if not yet registered by another plugin
  */
-add_action( 'admin_menu', 'add_plugin_page_background_for_category' );
+add_action( 'admin_menu', 'background_for_category_create_admin_menu', 8 );
 
-function add_plugin_page_background_for_category() {
-	add_options_page(
+function background_for_category_create_admin_menu() {
+	global $admin_page_hooks;
+	if ( isset( $admin_page_hooks['wp-booster'] ) ) {
+		return;
+	}
+	add_menu_page(
+		esc_html__( 'WP Booster', BFC_SLUG ),
+		esc_html_x( 'WP Booster', 'Menu item', BFC_SLUG ),
+		'manage_options',
+		'wp-booster',
+		'background_for_category_options_page_output',
+		'dashicons-backup',
+		92.3
+	);
+}
+
+/* Hide duplicate first submenu item (mirrors parent label) */
+add_action( 'admin_head', function() {
+	echo '<style>.toplevel_page_wp-booster li.wp-first-item { display: none; }</style>';
+} );
+
+/* Add submenu page under WP Booster */
+add_action( 'admin_menu', function() {
+	add_submenu_page(
+		'wp-booster',
 		'Настройки Фона категории',
 		'Фон категории',
 		'manage_options',
 		BFC_SLUG,
 		'background_for_category_options_page_output'
 	);
-}
+}, 99 );
 
 
 /**
@@ -92,7 +115,7 @@ function add_plugin_page_background_for_category() {
 add_action( 'admin_enqueue_scripts', 'background_for_category_enqueue_admin_scripts' );
 
 function background_for_category_enqueue_admin_scripts( $hook ) {
-	if ( 'settings_page_' . BFC_SLUG !== $hook ) {
+	if ( 'wp-booster_page_' . BFC_SLUG !== $hook ) {
 		return;
 	}
 	wp_enqueue_media();
@@ -150,6 +173,11 @@ function background_for_category_options_page_output() {
 			<b>Внимание!</b> Требует установки плагина или функции <b>get_top_term()</b>.<br>
 			Плагин устанавливает фоны для рубрик верхнего уровня.<br>
 			Выберите изображения из медиабиблиотеки для каждой рубрики и главной страницы.
+		</div>
+		<div style="font-size: 11pt; margin-top: 8px; color: #646970;">
+			<b><?php esc_html_e( 'Ограничения:', BFC_SLUG ); ?></b>
+			<?php esc_html_e( 'страницы (page) не поддерживаются; при нескольких рубриках у поста основная рубрика (Yoast/RankMath) игнорируется — применяется рубрика с наименьшим ID.', BFC_SLUG ); ?>
+			<a href="https://github.com/seojacky/background-for-category#readme" target="_blank"><?php esc_html_e( 'Подробнее в README', BFC_SLUG ); ?></a>
 		</div>
 
 		<form action="options.php" method="POST">
